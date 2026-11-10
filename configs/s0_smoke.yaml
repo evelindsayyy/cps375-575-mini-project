@@ -1,0 +1,17 @@
+# Gate G1: prove the whole pipeline runs end-to-end on a small sample.
+name: s0_smoke
+notes: Pipeline check on 4,500 examples; quick eval only, scores not meaningful
+mix:
+  counts:
+    math_train: 800
+    gsm8k_train: 700
+    opencodeinstruct_train: 1500
+    tulu3_persona_if: 1200
+    tulu3_general: 300
+  seed: 0
+train:
+  lora_rank: 64
+  epochs: 1
+  batch_size: 64
+eval:
+  limit: 50

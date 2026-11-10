@@ -1,0 +1,19 @@
+# Builds the verified example pools:  python -m src.data.pools configs/pools.yaml
+out_dir: data
+seed: 0
+dev_size: 300
+max_target_tokens: {math: 1500, code: 1500, ifollow: 900, general: 900}
+math:
+  harness_share: 0.75
+code:
+  shards: [0, 17, 34]
+  max_candidates: 20000
+  tests_share: 0.50
+  complete_share: 0.15
+  tests_in_prompt: 3
+  fewshot_max_chars: 1000
+chat:
+  ifollow_source: ai2-adapt-dev/personahub_ifdata_manual_seed_v3_29980
+  general_sources:
+    - ai2-adapt-dev/no_robots_converted
+    - ai2-adapt-dev/oasst1_converted

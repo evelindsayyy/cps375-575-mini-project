@@ -25,3 +25,10 @@ logs/
 inspect-logs/
 evaluation/checkpoint_info.json
 evaluation/baseline_results.json
+
+# Generated training data (manifests in data/manifests/ are tracked)
+data/pools/
+data/dev/
+
+# Experiment records: configs and summaries are tracked, bulky files are not
+runs/*/train.jsonl
