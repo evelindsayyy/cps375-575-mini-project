@@ -90,11 +90,23 @@ def code_example(candidate: dict, worked_pool: list[dict], rng: random.Random, c
                    messages=messages, meta=meta)  # fmt: skip
 
 
+def candidate_overlap(candidate: dict, index: BenchmarkIndex, config: CodeConfig) -> str | None:
+    """Name of the benchmark that any text this candidate can put into a prompt overlaps, or None.
+
+    The shown asserts are included. Measured on the first build: long number lists in asserts
+    (e.g. sorting tests) share 13-grams with MATH test problems; 11 such candidates were short
+    enough to be reused as worked examples, and 254 prompts were removed after formatting.
+    """
+    shown_tests = "\n".join(candidate["tests"][: config.tests_in_prompt])
+    return index.find(candidate["problem"]) or index.find(candidate["code"]) or index.find(shown_tests)
+
+
 def build_code(config: CodeConfig, seed: int, index: BenchmarkIndex) -> tuple[list[Example], dict]:
     """Return (examples, counts). Reads only the configured parquet shards of the train split.
 
-    Candidates are checked against the benchmark index BEFORE prompts are built, because a
-    worked example that overlaps a benchmark would otherwise contaminate every prompt that uses it.
+    Candidates are checked against the benchmark index BEFORE prompts are built (see
+    candidate_overlap), because a worked example that overlaps a benchmark would otherwise
+    contaminate every prompt that uses it.
     """
     files = [SHARD.format(i) for i in config.shards]
     # Read the shard files directly: loading a subset through the dataset name fails its row-count check.
@@ -106,7 +118,7 @@ def build_code(config: CodeConfig, seed: int, index: BenchmarkIndex) -> tuple[li
         candidate = parse_candidate(row, config)
         if candidate is None:
             continue
-        if index.find(candidate["problem"]) or index.find(candidate["code"]):
+        if candidate_overlap(candidate, index, config):
             overlapping += 1
             continue
         candidates.append(candidate)

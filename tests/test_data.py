@@ -6,7 +6,7 @@ from inspect_evals.math.utils import extract_answer
 
 from src.config import CodeConfig, MathConfig, MixConfig
 from src.data.chat_data import clean_messages
-from src.data.code_data import code_example, complete_prompt, parse_candidate
+from src.data.code_data import candidate_overlap, code_example, complete_prompt, parse_candidate
 from src.data.code_exec import passes_tests, static_problem
 from src.data.decontam import BenchmarkIndex
 from src.data.math_data import gsm8k_example, math_example, unbox_last
@@ -212,3 +212,15 @@ def test_filter_examples_applies_each_filter_and_counts_it():
     assert counts["math_train"] == {"removed_overlap_math_test": 1, "removed_bad_format": 1,
                                     "removed_too_long": 1, "removed_duplicate": 1, "kept": 1}  # fmt: skip
     assert removed_log[0]["id"] == "overlap" and removed_log[0]["benchmark"] == "math_test"
+
+
+def test_candidate_overlap_covers_problem_code_and_shown_tests():
+    """The asserts shown in a prompt are checked too: a worked example reuses them in other prompts."""
+    config = CodeConfig(tests_in_prompt=1)
+    clean = {"problem": "Sort a list.", "code": "def f(x):\n    return sorted(x)", "tests": ["assert f([2, 1]) == [1, 2]"]}
+    assert candidate_overlap(clean, make_index(), config) is None
+    assert candidate_overlap({**clean, "problem": LONG}, make_index(), config) == "math_test"
+    assert candidate_overlap({**clean, "code": f"# {LONG}"}, make_index(), config) == "math_test"
+    assert candidate_overlap({**clean, "tests": [f"assert f('{LONG}')"]}, make_index(), config) == "math_test"
+    # Only the asserts that can appear in a prompt count.
+    assert candidate_overlap({**clean, "tests": clean["tests"] + [f"assert f('{LONG}')"]}, make_index(), config) is None

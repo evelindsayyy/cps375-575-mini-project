@@ -1,0 +1,137 @@
+{
+  "config": {
+    "out_dir": "data",
+    "seed": 0,
+    "dev_size": 300,
+    "max_target_tokens": {
+      "math": 1500,
+      "code": 1500,
+      "ifollow": 900,
+      "general": 900
+    },
+    "math": {
+      "harness_share": 0.75
+    },
+    "code": {
+      "shards": [
+        0,
+        17,
+        34
+      ],
+      "max_candidates": 20000,
+      "tests_share": 0.5,
+      "complete_share": 0.15,
+      "tests_in_prompt": 3,
+      "fewshot_max_chars": 1000
+    },
+    "chat": {
+      "ifollow_source": "ai2-adapt-dev/personahub_ifdata_manual_seed_v3_29980",
+      "general_sources": [
+        "ai2-adapt-dev/no_robots_converted",
+        "ai2-adapt-dev/oasst1_converted"
+      ]
+    }
+  },
+  "benchmark_texts_indexed": {
+    "ifeval": 541,
+    "math_test": 5000,
+    "mbpp": 2802,
+    "gsm8k_test": 1319,
+    "humaneval": 164,
+    "aime2024": 30,
+    "aime2025": 30,
+    "ifbench": 300
+  },
+  "sources": {
+    "math_train": {
+      "dataset": "DigitalLearningGmbH/MATH-lighteval",
+      "split": "train",
+      "loaded": 7500,
+      "formatted": 7498,
+      "removed_overlap_math_test": 809,
+      "removed_overlap_aime2025": 53,
+      "removed_overlap_aime2024": 21,
+      "kept": 6602,
+      "removed_too_long": 13,
+      "pool": 6302,
+      "dev": 300,
+      "styles": {
+        "answer_is": 814,
+        "harness": 4702,
+        "boxed": 786
+      }
+    },
+    "gsm8k_train": {
+      "dataset": "openai/gsm8k (main)",
+      "split": "train",
+      "loaded": 7473,
+      "formatted": 7473,
+      "removed_overlap_gsm8k_test": 4,
+      "kept": 7469,
+      "pool": 7469,
+      "dev": 0,
+      "styles": {
+        "harness": 5622,
+        "hashes": 897,
+        "answer_is": 950
+      }
+    },
+    "opencodeinstruct_train": {
+      "dataset": "nvidia/OpenCodeInstruct",
+      "split": "train",
+      "shards": [
+        0,
+        17,
+        34
+      ],
+      "rows_scanned": 158830,
+      "removed_benchmark_overlap": 595,
+      "passed_static_filters": 20000,
+      "passed_tests": 19963,
+      "worked_example_pool": 2664,
+      "formatted": 19963,
+      "kept": 19940,
+      "removed_duplicate": 23,
+      "pool": 19640,
+      "dev": 300,
+      "styles": {
+        "complete": 2751,
+        "plain": 7064,
+        "tests": 9825
+      }
+    },
+    "tulu3_persona_if": {
+      "dataset": "allenai/tulu-3-sft-mixture",
+      "split": "train",
+      "loaded": 29980,
+      "formatted": 29980,
+      "removed_overlap_ifeval": 6,
+      "removed_overlap_mbpp": 2,
+      "removed_overlap_math_test": 1,
+      "kept": 29025,
+      "removed_too_long": 928,
+      "removed_duplicate": 18,
+      "pool": 28725,
+      "dev": 300,
+      "styles": {
+        "chat": 28725
+      }
+    },
+    "tulu3_general": {
+      "dataset": "allenai/tulu-3-sft-mixture",
+      "split": "train",
+      "loaded": 16631,
+      "formatted": 15836,
+      "removed_overlap_math_test": 5,
+      "removed_overlap_mbpp": 3,
+      "kept": 15682,
+      "removed_too_long": 121,
+      "removed_duplicate": 25,
+      "pool": 15682,
+      "dev": 0,
+      "styles": {
+        "chat": 15682
+      }
+    }
+  }
+}
