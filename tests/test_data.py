@@ -5,7 +5,7 @@ import pytest
 from inspect_evals.math.utils import extract_answer
 
 from src.config import CodeConfig, MathConfig, MixConfig
-from src.data.chat_data import clean_messages
+from src.data.chat_data import clean_messages, is_generation_request
 from src.data.code_data import candidate_overlap, code_example, complete_prompt, parse_candidate
 from src.data.code_exec import passes_tests, static_problem
 from src.data.decontam import BenchmarkIndex
@@ -152,6 +152,13 @@ def test_clean_messages():
     assert [m.content for m in clean_messages(ok)] == ["hi", "hello"]
     assert clean_messages([{"role": "system", "content": "x"}] + ok) is None
     assert clean_messages([ok[0], {"role": "assistant", "content": " "}]) is None
+
+
+def test_is_generation_request_matches_only_the_leaked_wording():
+    leaked = "Repeat the request: Create a Verifiable Instruction that the following persona might ask you to do: A chef."
+    assert is_generation_request(leaked)
+    assert not is_generation_request("Write a description of the following persona in a json format.")
+    assert not is_generation_request("Repeat the request above verbatim, then answer it in 3 sentences.")
 
 
 def test_split_dev_is_disjoint_and_deterministic():

@@ -87,40 +87,42 @@
       "rows_scanned": 158830,
       "removed_benchmark_overlap": 595,
       "passed_static_filters": 20000,
-      "passed_tests": 19963,
-      "worked_example_pool": 2664,
-      "formatted": 19963,
-      "kept": 19940,
+      "passed_tests": 19969,
+      "worked_example_pool": 2667,
+      "formatted": 19969,
+      "kept": 19946,
       "removed_duplicate": 23,
-      "pool": 19640,
+      "pool": 19646,
       "dev": 300,
       "styles": {
-        "complete": 2751,
-        "plain": 7064,
-        "tests": 9825
+        "plain": 7066,
+        "tests": 9831,
+        "complete": 2749
       }
     },
     "tulu3_persona_if": {
       "dataset": "allenai/tulu-3-sft-mixture",
       "split": "train",
       "loaded": 29980,
-      "formatted": 29980,
-      "removed_overlap_ifeval": 6,
+      "removed_generation_request": 73,
+      "formatted": 29907,
+      "removed_overlap_ifeval": 5,
       "removed_overlap_mbpp": 2,
       "removed_overlap_math_test": 1,
-      "kept": 29025,
-      "removed_too_long": 928,
+      "kept": 28954,
+      "removed_too_long": 927,
       "removed_duplicate": 18,
-      "pool": 28725,
+      "pool": 28654,
       "dev": 300,
       "styles": {
-        "chat": 28725
+        "chat": 28654
       }
     },
     "tulu3_general": {
       "dataset": "allenai/tulu-3-sft-mixture",
       "split": "train",
       "loaded": 16631,
+      "removed_generation_request": 0,
       "formatted": 15836,
       "removed_overlap_math_test": 5,
       "removed_overlap_mbpp": 3,
