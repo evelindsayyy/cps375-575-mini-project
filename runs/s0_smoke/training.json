@@ -1,0 +1,8 @@
+{
+  "checkpoint_path": "tinker://be4c7b54-8189-598c-a789-451313691ed8:train:0/sampler_weights/s0_smoke",
+  "published": true,
+  "examples": 4500,
+  "steps": 71,
+  "start_learning_rate": 0.00047297908091376354,
+  "final_loss": 0.5351961494406997
+}

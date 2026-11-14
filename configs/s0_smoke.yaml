@@ -1,4 +1,4 @@
-# Gate G1: prove the whole pipeline runs end-to-end on a small sample.
+# Smoke run: prove the whole pipeline runs end-to-end on a small sample.
 name: s0_smoke
 notes: Pipeline check on 4,500 examples; quick eval only, scores not meaningful
 mix:

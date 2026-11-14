@@ -1,0 +1,29 @@
+{
+  "name": "s0_smoke",
+  "notes": "Pipeline check on 4,500 examples; quick eval only, scores not meaningful",
+  "mix": {
+    "pools_dir": "data/pools",
+    "counts": {
+      "math_train": 800,
+      "gsm8k_train": 700,
+      "opencodeinstruct_train": 1500,
+      "tulu3_persona_if": 1200,
+      "tulu3_general": 300
+    },
+    "seed": 0
+  },
+  "train": {
+    "base_model": "Qwen/Qwen3.5-9B-Base",
+    "lora_rank": 64,
+    "learning_rate": null,
+    "epochs": 1,
+    "batch_size": 64,
+    "max_length": 4096,
+    "seed": 0
+  },
+  "eval": {
+    "limit": 50,
+    "temperature": 0.0,
+    "top_p": 1.0
+  }
+}

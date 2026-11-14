@@ -1,0 +1,94 @@
+{
+  "name": "s0_smoke",
+  "finished": "2026-11-14T19:44:14+00:00",
+  "config": {
+    "name": "s0_smoke",
+    "notes": "Pipeline check on 4,500 examples; quick eval only, scores not meaningful",
+    "mix": {
+      "pools_dir": "data/pools",
+      "counts": {
+        "math_train": 800,
+        "gsm8k_train": 700,
+        "opencodeinstruct_train": 1500,
+        "tulu3_persona_if": 1200,
+        "tulu3_general": 300
+      },
+      "seed": 0
+    },
+    "train": {
+      "base_model": "Qwen/Qwen3.5-9B-Base",
+      "lora_rank": 64,
+      "learning_rate": null,
+      "epochs": 1,
+      "batch_size": 64,
+      "max_length": 4096,
+      "seed": 0
+    },
+    "eval": {
+      "limit": 50,
+      "temperature": 0.0,
+      "top_p": 1.0
+    }
+  },
+  "data": {
+    "sources": {
+      "math_train": {
+        "split": "train",
+        "sampled": 800,
+        "pool_size": 6302
+      },
+      "gsm8k_train": {
+        "split": "train",
+        "sampled": 700,
+        "pool_size": 7469
+      },
+      "opencodeinstruct_train": {
+        "split": "train",
+        "sampled": 1500,
+        "pool_size": 19646
+      },
+      "tulu3_persona_if": {
+        "split": "train",
+        "sampled": 1200,
+        "pool_size": 28654
+      },
+      "tulu3_general": {
+        "split": "train",
+        "sampled": 300,
+        "pool_size": 15682
+      }
+    },
+    "overlap_check": {
+      "examples_checked": 4500,
+      "overlaps_found": 0,
+      "benchmark_texts_indexed": {
+        "ifeval": 541,
+        "math_test": 5000,
+        "mbpp": 2802,
+        "gsm8k_test": 1319,
+        "humaneval": 164,
+        "aime2024": 30,
+        "aime2025": 30,
+        "ifbench": 300
+      }
+    },
+    "total": 4500
+  },
+  "training": {
+    "checkpoint_path": "tinker://be4c7b54-8189-598c-a789-451313691ed8:train:0/sampler_weights/s0_smoke",
+    "published": true,
+    "examples": 4500,
+    "steps": 71,
+    "start_learning_rate": 0.00047297908091376354,
+    "final_loss": 0.5351961494406997
+  },
+  "full_eval": false,
+  "scores": {
+    "ifeval": 79.0,
+    "ifeval_samples": 50,
+    "math500": 80.0,
+    "math500_samples": 50,
+    "mbpp": 84.0,
+    "mbpp_samples": 50
+  }
+}
