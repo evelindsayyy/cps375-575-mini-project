@@ -3,3 +3,4 @@
 | Run | Notes | Examples (per source) | Rank | LR | Epochs | Eval | IFEval | MATH-500 | MBPP | Meets all | Checkpoint |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | s0_smoke | Pipeline check on 4,500 examples; quick eval only, scores not meaningful | math_train 800, gsm8k_train 700, opencodeinstruct_train 1500, tulu3_persona_if 1200, tulu3_general 300 | 64 | 4.7e-04 | 1 | limit 50 | 79.0 | 80.0 | 84.0 | no | `tinker://be4c7b54-8189-598c-a789-451313691ed8:train:0/sampler_weights/s0_smoke` |
+| s1_a | First full run on 9,600 dataset-solution examples, 2 epochs, full evaluation | math_train 1700, gsm8k_train 1500, opencodeinstruct_train 3100, tulu3_persona_if 2600, tulu3_general 700 | 64 | 4.7e-04 | 2 | full | 78.5 | 55.2 | 76.7 | yes | `tinker://de45d77e-fd51-5a69-8327-45fb4dd5994a:train:0/sampler_weights/s1_a` |

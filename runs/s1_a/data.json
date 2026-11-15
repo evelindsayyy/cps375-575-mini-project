@@ -1,0 +1,44 @@
+{
+  "sources": {
+    "math_train": {
+      "split": "train",
+      "sampled": 1700,
+      "pool_size": 6302
+    },
+    "gsm8k_train": {
+      "split": "train",
+      "sampled": 1500,
+      "pool_size": 7469
+    },
+    "opencodeinstruct_train": {
+      "split": "train",
+      "sampled": 3100,
+      "pool_size": 19646
+    },
+    "tulu3_persona_if": {
+      "split": "train",
+      "sampled": 2600,
+      "pool_size": 28654
+    },
+    "tulu3_general": {
+      "split": "train",
+      "sampled": 700,
+      "pool_size": 15682
+    }
+  },
+  "overlap_check": {
+    "examples_checked": 9600,
+    "overlaps_found": 0,
+    "benchmark_texts_indexed": {
+      "ifeval": 541,
+      "math_test": 5000,
+      "mbpp": 2802,
+      "gsm8k_test": 1319,
+      "humaneval": 164,
+      "aime2024": 30,
+      "aime2025": 30,
+      "ifbench": 300
+    }
+  },
+  "total": 9600
+}

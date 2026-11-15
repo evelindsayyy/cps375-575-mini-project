@@ -1,0 +1,16 @@
+# First full run: dataset solutions from all five sources, full evaluation.
+# Mixture keeps the smoke run's proportions (code trimmed by 100 examples to fit the cost limit).
+name: s1_a
+notes: First full run on 9,600 dataset-solution examples, 2 epochs, full evaluation
+mix:
+  counts:
+    math_train: 1700
+    gsm8k_train: 1500
+    opencodeinstruct_train: 3100
+    tulu3_persona_if: 2600
+    tulu3_general: 700
+  seed: 0
+train:
+  lora_rank: 64
+  epochs: 2
+  batch_size: 64

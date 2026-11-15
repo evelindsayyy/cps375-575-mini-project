@@ -1,0 +1,8 @@
+{
+  "checkpoint_path": "tinker://de45d77e-fd51-5a69-8327-45fb4dd5994a:train:0/sampler_weights/s1_a",
+  "published": true,
+  "examples": 9600,
+  "steps": 300,
+  "start_learning_rate": 0.00047297908091376354,
+  "final_loss": 0.4662647529675443
+}
