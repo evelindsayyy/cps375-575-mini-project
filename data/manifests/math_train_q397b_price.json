@@ -1,0 +1,42 @@
+{
+  "config": {
+    "name": "math_train_q397b_price",
+    "source": "math_train",
+    "problems": 50,
+    "teacher": {
+      "model": "Qwen/Qwen3.5-397B-A17B",
+      "renderer": "qwen3_5_disable_thinking",
+      "temperature": 0.7,
+      "max_tokens": 2048
+    },
+    "samples_per_problem": 4,
+    "keep_per_problem": 3,
+    "max_target_tokens": 1500,
+    "pools_dir": "data/pools",
+    "out_dir": "data",
+    "chunk_size": 50,
+    "seed": 0
+  },
+  "split": "train",
+  "questions": 50,
+  "counts": {
+    "sampled": 200,
+    "truncated": 33,
+    "no_answer": 0,
+    "wrong": 4,
+    "correct": 163,
+    "duplicate": 8,
+    "questions_with_a_kept_solution": 42,
+    "removed_too_long": 6,
+    "pool": 116
+  },
+  "tokens": {
+    "prompt_per_request": 12042,
+    "sampled": 158856
+  },
+  "styles": {
+    "harness": 78,
+    "answer_is": 18,
+    "boxed": 20
+  }
+}

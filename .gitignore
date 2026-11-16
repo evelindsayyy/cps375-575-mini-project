@@ -32,3 +32,6 @@ data/dev/
 
 # Experiment records: configs and summaries are tracked, bulky files are not
 runs/*/train.jsonl
+
+# Raw teacher samples (manifests in data/manifests/ are tracked)
+data/distill/

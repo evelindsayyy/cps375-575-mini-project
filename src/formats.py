@@ -49,6 +49,19 @@ MATH_PROMPTS = {
 }
 
 
+# Given to the teacher model as its system message when it writes math solutions. The question
+# itself is the unchanged training prompt, so the teacher sees the same format request the
+# student will be trained on. Kept short and step-by-step: students up to 3B learned better from
+# shorter reasoning than from long chains (Li et al., arXiv 2502.12143), so we do not ask for more.
+MATH_TEACHER_SPEC = (
+    "You write worked solutions to math problems. Solve the problem step by step, showing the "
+    "steps needed to reach the answer and nothing else: do not restate the problem, do not give "
+    "alternative methods, and do not re-check the answer at the end. Finish with the final-answer "
+    "line in exactly the format the problem asks for. That line must be the last line; write "
+    "nothing after it."
+)
+
+
 def math_prompt(style: str, problem: str) -> str:
     """Insert the problem with str.replace, because LaTeX problems contain braces."""
     return MATH_PROMPTS[style].replace("{prompt}", problem.strip())

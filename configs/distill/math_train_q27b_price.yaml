@@ -1,0 +1,7 @@
+# Pricing batch: a small sample of MATH train questions answered by one teacher.
+name: math_train_q27b_price
+source: math_train
+problems: 50
+teacher:
+  model: Qwen/Qwen3.8-27B
+  renderer: qwen3_8_disable_thinking

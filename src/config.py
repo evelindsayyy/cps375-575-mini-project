@@ -61,6 +61,38 @@ class PoolsConfig(Config):
     chat: ChatConfig = ChatConfig()
 
 
+# ---------------------------------------------------------------- teacher data
+
+
+class TeacherConfig(Config):
+    """A larger Tinker model that writes solutions. Thinking is turned off in the renderer so the
+    solution is visible step-by-step text, not a hidden reasoning trace."""
+
+    model: str
+    renderer: str
+    temperature: float = 0.7  # > 0 so several samples per question differ
+    max_tokens: int = 2048  # probe on MATH train (2026-11-15): correct solutions used 540-1,330 tokens
+
+
+class DistillConfig(Config):
+    """Teacher solutions for questions taken from one existing pool (training split only).
+
+    The output is a new pool, data/pools/<name>.jsonl, used by adding it to an experiment's mix.
+    """
+
+    name: str  # output pool name, e.g. "math_train_distilled_q38"
+    source: str  # pool the questions come from, e.g. "math_train"
+    problems: int  # number of questions to send to the teacher
+    teacher: TeacherConfig
+    samples_per_problem: int = 4
+    keep_per_problem: int = 3  # distinct correct solutions kept per question
+    max_target_tokens: int = 1500  # same limit as the math pools (PoolsConfig.max_target_tokens)
+    pools_dir: str = "data/pools"
+    out_dir: str = "data"  # raw samples go to <out_dir>/distill/<name>/, the manifest to manifests/
+    chunk_size: int = 50  # questions per batch of requests; finished batches are saved for resuming
+    seed: int = 0
+
+
 # ---------------------------------------------------------------- one experiment
 
 
