@@ -9,6 +9,7 @@ Everything about the run is stored in runs/<name>/, each file written as soon as
     losses.jsonl    loss at every step
     training.json   checkpoint path and training record (written the moment training ends)
     eval.json       full output of the provided evaluation script
+    dev_eval.json   scores and every sample on our own held-out dev sets (src/dev_eval.py)
     summary.json    config + data counts + checkpoint path + scores (read by src/report.py)
 
 Runs are resumable: running the same config again skips every stage whose file already exists,
@@ -21,9 +22,10 @@ import os
 import sys
 from datetime import datetime, timezone
 
-from src.config import ExperimentConfig, load_config
+from src.config import DevEvalConfig, ExperimentConfig, load_config
 from src.data.decontam import build_benchmark_index
 from src.data.mix import build_training_set
+from src.dev_eval import evaluate_dev
 from src.evaluate import evaluate, read_scores
 from src.schema import read_jsonl, write_jsonl
 from src.train.sft import train
@@ -44,7 +46,7 @@ def save_json(path: str, data: dict) -> None:
 def run_experiment(config: ExperimentConfig, runs_dir: str = RUNS_DIR) -> dict:
     run_dir = os.path.join(runs_dir, config.name)
     paths = {name: os.path.join(run_dir, name) for name in
-             ("config.json", "train.jsonl", "data.json", "training.json", "eval.json", "summary.json")}  # fmt: skip
+             ("config.json", "train.jsonl", "data.json", "training.json", "eval.json", "dev_eval.json", "summary.json")}  # fmt: skip
     config_record = config.model_dump(mode="json")
 
     if os.path.exists(paths["config.json"]):
@@ -77,6 +79,12 @@ def run_experiment(config: ExperimentConfig, runs_dir: str = RUNS_DIR) -> dict:
     else:
         scores = evaluate(config.eval, training["checkpoint_path"], config.train.base_model, paths["eval.json"])
 
+    # Stage 4: our own dev sets, scored the same way for every run (DevEvalConfig defaults).
+    if os.path.exists(paths["dev_eval.json"]):
+        dev_scores = load_json(paths["dev_eval.json"])["scores"]
+    else:
+        dev_scores = evaluate_dev(DevEvalConfig(), training["checkpoint_path"], paths["dev_eval.json"])
+
     summary = {
         "name": config.name,
         "finished": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -85,6 +93,7 @@ def run_experiment(config: ExperimentConfig, runs_dir: str = RUNS_DIR) -> dict:
         "training": training,
         "full_eval": config.eval.limit is None,
         "scores": scores,
+        "dev_scores": dev_scores,
     }
     save_json(paths["summary.json"], summary)
     return summary

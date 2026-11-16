@@ -8,10 +8,10 @@ import json
 import os
 
 THRESHOLDS = {"ifeval": 58.0, "math500": 45.0, "mbpp": 70.0}
-HEADER = "| Run | Notes | Examples (per source) | Rank | LR | Epochs | Eval | IFEval | MATH-500 | MBPP | Meets all | Checkpoint |"
+HEADER = "| Run | Notes | Examples (per source) | Rank | LR | Epochs | Eval | IFEval | MATH-500 | MBPP | Meets all | Dev math | Dev code | Checkpoint |"
 
 
-def table_row(summary: dict) -> str:
+def table_row(summary: dict, dev: dict) -> str:
     config, scores = summary["config"], summary["scores"]
     sources = ", ".join(f"{source} {info['sampled']}" for source, info in summary["data"]["sources"].items())
     meets = summary["full_eval"] and all(scores[task] >= THRESHOLDS[task] for task in THRESHOLDS)
@@ -20,19 +20,26 @@ def table_row(summary: dict) -> str:
         f"{summary['training']['start_learning_rate']:.1e}", config["train"]["epochs"],
         "full" if summary["full_eval"] else f"limit {config['eval']['limit']}",
         scores["ifeval"], scores["math500"], scores["mbpp"], "yes" if meets else "no",
+        dev.get("math", "–"), dev.get("code", "–"),
         f"`{summary['training']['checkpoint_path']}`",
     ]  # fmt: skip
     return "| " + " | ".join(str(cell) for cell in cells) + " |"
 
 
 def runs_table(runs_dir: str = "runs") -> str:
-    summaries = []
+    rows = []
     for path in glob.glob(os.path.join(runs_dir, "*", "summary.json")):
         with open(path, encoding="utf-8") as f:
-            summaries.append(json.load(f))
-    summaries.sort(key=lambda summary: summary["finished"])
+            summary = json.load(f)
+        # Read from the run folder, so runs finished before dev evaluation existed can be scored later.
+        dev_path = os.path.join(os.path.dirname(path), "dev_eval.json")
+        dev = {}
+        if os.path.exists(dev_path):
+            with open(dev_path, encoding="utf-8") as f:
+                dev = json.load(f)["scores"]
+        rows.append((summary["finished"], table_row(summary, dev)))
     lines = [HEADER, "|" + "---|" * (HEADER.count("|") - 1)]
-    return "\n".join(lines + [table_row(summary) for summary in summaries]) + "\n"
+    return "\n".join(lines + [row for _, row in sorted(rows)]) + "\n"
 
 
 if __name__ == "__main__":

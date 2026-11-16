@@ -28,10 +28,12 @@ def test_runs_table_is_ordered_and_marks_threshold(tmp_path):
     for name, finished, full in [("b", "2026-11-12", True), ("a", "2026-11-11", False)]:
         (tmp_path / name).mkdir()
         (tmp_path / name / "summary.json").write_text(json.dumps(summary(name, finished, full)))
+    (tmp_path / "b" / "dev_eval.json").write_text(json.dumps({"scores": {"math": 40.0, "code": 70.0}}))
     rows = runs_table(str(tmp_path)).strip().split("\n")
     assert len(rows) == 4 and rows[2].startswith("| a |") and rows[3].startswith("| b |")
     assert "| limit 50 |" in rows[2] and "| no |" in rows[2]  # a quick eval never counts as meeting
     assert "| full |" in rows[3] and "| 60.1 | 47.0 | 72.0 | yes |" in rows[3]
+    assert "| 40.0 | 70.0 |" in rows[3] and "| – | – |" in rows[2]  # dev scores; run a has none
 
 
 def test_evaluate_rejects_results_with_a_failed_task(tmp_path, monkeypatch):

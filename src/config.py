@@ -122,6 +122,14 @@ class EvalConfig(Config):
     top_p: float = 1.0
 
 
+class DevEvalConfig(Config):
+    """Scoring on our own held-out dev sets. Kept at its defaults for every run so runs compare."""
+
+    dev_dir: str = "data/dev"
+    skills: list[Literal["math", "code"]] = ["math", "code"]
+    max_tokens: dict[str, int] = {"math": 4096, "code": 4096}  # the grader's limits for these tasks
+
+
 class ExperimentConfig(Config):
     name: str  # also the folder name under runs/
     notes: str = ""  # what this experiment is testing, in one sentence

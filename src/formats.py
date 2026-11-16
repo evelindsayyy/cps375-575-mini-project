@@ -29,6 +29,7 @@ import textwrap
 
 from inspect_evals.math.math import USER_PROMPT_TEMPLATE  # the math grader's prompt template
 from inspect_evals.math.utils import extract_answer  # the math grader's answer extraction
+from inspect_evals.math.utils import last_boxed_only_string, remove_boxed
 from inspect_evals.mbpp.mbpp import PROMPT_TEMPLATE  # the MBPP grader's instruction header
 
 from src.schema import Example
@@ -75,6 +76,23 @@ def math_target(style: str, solution: str, answer: str) -> str:
         "hashes": f"#### {answer}",
     }[style]
     return f"{solution.strip()}\n{final_line}"
+
+
+# Final lines of the non-grader prompt styles above; each must be the last line.
+FINAL_LINE = {"answer_is": re.compile(r"The answer is (.+?)\.?\s*\Z"), "hashes": re.compile(r"####\s*(.+?)\s*\Z")}
+
+
+def final_answer(style: str, text: str) -> str | None:
+    """The answer a reader of `style` would take from the text, or None if there is none."""
+    if style == "harness":
+        return extract_answer(text) or None  # the grader's own extraction
+    if style == "boxed":
+        boxed = last_boxed_only_string(text)
+        if boxed is None:
+            return None
+        return remove_boxed(boxed).strip() or None
+    match = FINAL_LINE[style].search(text)
+    return match.group(1).strip() if match else None
 
 
 # ---------------------------------------------------------------- code

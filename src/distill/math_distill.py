@@ -19,12 +19,10 @@ Outputs:
 import json
 import logging
 import os
-import re
 import sys
 from collections import Counter
 
 import tinker
-from inspect_evals.math.utils import extract_answer, last_boxed_only_string, remove_boxed
 from tinker_cookbook import renderers
 from tinker_cookbook.tokenizer_utils import get_tokenizer
 
@@ -32,27 +30,10 @@ from src.config import BASE_MODEL, DistillConfig, load_config
 from src.data.decontam import build_benchmark_index, split_clean
 from src.data.pools import within_token_limit
 from src.distill.verify import answers_match
-from src.formats import MATH_TEACHER_SPEC, target_problem
+from src.formats import MATH_TEACHER_SPEC, final_answer, target_problem
 from src.schema import Example, Message, bucket, normalize, read_jsonl, write_jsonl
 
 logger = logging.getLogger(__name__)
-
-# Final lines of the non-grader prompt styles in src/formats.py; each must be the last line.
-FINAL_LINE = {"answer_is": re.compile(r"The answer is (.+?)\.?\s*\Z"), "hashes": re.compile(r"####\s*(.+?)\s*\Z")}
-
-
-def final_answer(style: str, text: str) -> str | None:
-    """The answer a reader of `style` would take from the text, or None if there is none."""
-    if style == "harness":
-        return extract_answer(text) or None  # the grader's own extraction
-    if style == "boxed":
-        boxed = last_boxed_only_string(text)
-        if boxed is None:
-            return None
-        return remove_boxed(boxed).strip() or None
-    match = FINAL_LINE[style].search(text)
-    return match.group(1).strip() if match else None
-
 
 def teacher_messages(question: Example) -> list[dict]:
     return [{"role": "system", "content": MATH_TEACHER_SPEC}, {"role": "user", "content": question.messages[0].content}]

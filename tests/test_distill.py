@@ -1,7 +1,7 @@
 from src.config import DistillConfig, TeacherConfig
-from src.distill.math_distill import final_answer, select_solutions, teacher_messages
+from src.distill.math_distill import select_solutions, teacher_messages
 from src.distill.verify import answers_match
-from src.formats import math_prompt, target_problem
+from src.formats import final_answer, math_prompt, target_problem
 from src.schema import Example, Message
 
 TEACHER = TeacherConfig(model="Qwen/Qwen3.8-27B", renderer="qwen3_8_disable_thinking")

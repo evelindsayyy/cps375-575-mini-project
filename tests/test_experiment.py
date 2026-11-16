@@ -21,7 +21,7 @@ def make_config(**overrides) -> ExperimentConfig:
 @pytest.fixture
 def stages(monkeypatch):
     """Replace the three expensive stages with fakes that count how often they run."""
-    calls = {"data": 0, "train": 0, "eval": 0}
+    calls = {"data": 0, "train": 0, "eval": 0, "dev": 0}
 
     def fake_data(mix_config, index):
         calls["data"] += 1
@@ -39,7 +39,15 @@ def stages(monkeypatch):
             json.dump(RESULTS, f)
         return experiment.read_scores(RESULTS)
 
+    def fake_dev(dev_config, checkpoint_path, out_path):
+        calls["dev"] += 1
+        scores = {"math": 40.0, "math_samples": 300, "code": 70.0, "code_samples": 300}
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump({"scores": scores}, f)
+        return scores
+
     monkeypatch.setattr(experiment, "build_benchmark_index", lambda: None)
+    monkeypatch.setattr(experiment, "evaluate_dev", fake_dev)
     monkeypatch.setattr(experiment, "build_training_set", fake_data)
     monkeypatch.setattr(experiment, "train", fake_train)
     monkeypatch.setattr(experiment, "evaluate", fake_evaluate)
@@ -48,10 +56,11 @@ def stages(monkeypatch):
 
 def test_fresh_run_executes_every_stage_and_saves_each_result(tmp_path, stages):
     summary = experiment.run_experiment(make_config(), str(tmp_path))
-    assert stages == {"data": 1, "train": 1, "eval": 1}
+    assert stages == {"data": 1, "train": 1, "eval": 1, "dev": 1}
     assert summary["training"]["checkpoint_path"] == "tinker://fake" and summary["scores"]["mbpp"] == 72.0
+    assert summary["dev_scores"]["math"] == 40.0
     saved = sorted(os.listdir(tmp_path / "run1"))
-    assert saved == ["config.json", "data.json", "eval.json", "summary.json", "train.jsonl", "training.json"]
+    assert saved == ["config.json", "data.json", "dev_eval.json", "eval.json", "summary.json", "train.jsonl", "training.json"]
 
 
 def test_crash_during_evaluation_keeps_the_checkpoint_and_does_not_retrain(tmp_path, stages, monkeypatch):
@@ -67,18 +76,18 @@ def test_crash_during_evaluation_keeps_the_checkpoint_and_does_not_retrain(tmp_p
 
     monkeypatch.setattr(experiment, "evaluate", working_evaluate)
     summary = experiment.run_experiment(make_config(), str(tmp_path))
-    assert stages == {"data": 1, "train": 1, "eval": 1}  # data and training were not repeated
+    assert stages == {"data": 1, "train": 1, "eval": 1, "dev": 1}  # data and training were not repeated
     assert summary["scores"]["ifeval"] == 60.0
 
 
 def test_finished_run_is_returned_without_running_anything(tmp_path, stages):
     first = experiment.run_experiment(make_config(), str(tmp_path))
     assert experiment.run_experiment(make_config(), str(tmp_path)) == first
-    assert stages == {"data": 1, "train": 1, "eval": 1}
+    assert stages == {"data": 1, "train": 1, "eval": 1, "dev": 1}
 
 
 def test_run_folder_with_a_different_config_is_refused(tmp_path, stages):
     experiment.run_experiment(make_config(), str(tmp_path))
     with pytest.raises(ValueError):
         experiment.run_experiment(make_config(notes="changed"), str(tmp_path))
-    assert stages == {"data": 1, "train": 1, "eval": 1}
+    assert stages == {"data": 1, "train": 1, "eval": 1, "dev": 1}
