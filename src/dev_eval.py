@@ -10,6 +10,8 @@ grader's rules:
         the last line, and its answer must equal the gold answer by the grader's equivalence checks
   code  the first ```python block (the whole completion if there is none, as the MBPP grader
         does) is run with all of the example's tests, in a separate process with a timeout
+  ifollow  the prompts carry no checkable constraints, so a second model reviews each response
+        against the prompt's instructions (src/judge.py); a missing verdict counts as a failure
 """
 
 import json
@@ -24,6 +26,7 @@ from src.config import BASE_MODEL, DevEvalConfig
 from src.data.code_exec import passes_tests_many
 from src.distill.verify import answers_match
 from src.formats import extract_code, final_answer
+from src.judge import judge_responses
 from src.schema import Example, read_jsonl
 
 
@@ -50,20 +53,31 @@ def sample_student(checkpoint_path: str, examples: list[Example], max_tokens: in
     return [renderers.get_text_content(renderer.parse_response(f.result().sequences[0].tokens)[0]) for f in futures]
 
 
+def score_skill(skill: str, examples: list[Example], completions: list[str], config: DevEvalConfig) -> tuple[list[bool], list[dict], dict]:
+    """(correct per example, extra fields per sample, extra scores) for one skill."""
+    if skill == "math":
+        return [math_correct(ex, text) for ex, text in zip(examples, completions)], [{}] * len(examples), {}
+    if skill == "code":
+        jobs = [(code_to_run(text), ex.meta["tests"]) for ex, text in zip(examples, completions)]
+        return passes_tests_many(jobs), [{}] * len(examples), {}
+    verdicts = judge_responses(config.judge, [ex.messages[0].content for ex in examples], completions)
+    unreadable = sum(verdict is None for verdict, _ in verdicts)
+    return ([verdict == "pass" for verdict, _ in verdicts], [{"judge": text} for _, text in verdicts],
+            {"ifollow_unreadable_verdicts": unreadable})  # fmt: skip
+
+
 def evaluate_dev(config: DevEvalConfig, checkpoint_path: str, out_path: str) -> dict:
     """Score every configured skill; write all samples and the scores to out_path."""
     scores, samples = {}, []
     for skill in config.skills:
         examples = read_jsonl(os.path.join(config.dev_dir, f"{skill}.jsonl"))
         completions = sample_student(checkpoint_path, examples, config.max_tokens[skill])
-        if skill == "math":
-            correct = [math_correct(example, text) for example, text in zip(examples, completions)]
-        else:
-            correct = passes_tests_many([(code_to_run(text), ex.meta["tests"]) for ex, text in zip(examples, completions)])
+        correct, extras, extra_scores = score_skill(skill, examples, completions, config)
         scores[skill] = round(100 * sum(correct) / len(examples), 1)
         scores[f"{skill}_samples"] = len(examples)
-        samples += [{"id": example.id, "skill": skill, "style": example.style, "correct": ok, "completion": text}
-                    for example, text, ok in zip(examples, completions, correct)]  # fmt: skip
+        scores.update(extra_scores)
+        samples += [{"id": ex.id, "skill": skill, "style": ex.style, "correct": ok, "completion": text, **extra}
+                    for ex, text, ok, extra in zip(examples, completions, correct, extras)]  # fmt: skip
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump({"config": config.model_dump(), "checkpoint_path": checkpoint_path, "scores": scores,
                    "samples": samples}, f, indent=2)  # fmt: skip

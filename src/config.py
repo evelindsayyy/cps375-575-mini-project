@@ -122,12 +122,22 @@ class EvalConfig(Config):
     top_p: float = 1.0
 
 
+class JudgeConfig(Config):
+    """A second model that checks a response against the instructions in its prompt."""
+
+    model: str = "Qwen/Qwen3.5-397B-A17B"  # the largest Qwen model on Tinker (listed 2026-11-15)
+    renderer: str = "qwen3_5_disable_thinking"  # a short checklist, not a long hidden reasoning trace
+    max_tokens: int = 2048  # at 1024, 6 of 300 reviews on the s1_a dev run stopped before the verdict
+
+
 class DevEvalConfig(Config):
     """Scoring on our own held-out dev sets. Kept at its defaults for every run so runs compare."""
 
     dev_dir: str = "data/dev"
-    skills: list[Literal["math", "code"]] = ["math", "code"]
-    max_tokens: dict[str, int] = {"math": 4096, "code": 4096}  # the grader's limits for these tasks
+    skills: list[Literal["math", "code", "ifollow"]] = ["math", "code", "ifollow"]
+    # The grader's limits: 4096 tokens for MATH and MBPP, 1024 for IFEval.
+    max_tokens: dict[str, int] = {"math": 4096, "code": 4096, "ifollow": 1024}
+    judge: JudgeConfig = JudgeConfig()
 
 
 class ExperimentConfig(Config):

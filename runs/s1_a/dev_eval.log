@@ -2,5 +2,8 @@
   "math": 53.0,
   "math_samples": 300,
   "code": 75.7,
-  "code_samples": 300
+  "code_samples": 300,
+  "ifollow": 53.0,
+  "ifollow_samples": 300,
+  "ifollow_unreadable_verdicts": 1
 }

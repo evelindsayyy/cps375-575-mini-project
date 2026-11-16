@@ -8,7 +8,7 @@ import json
 import os
 
 THRESHOLDS = {"ifeval": 58.0, "math500": 45.0, "mbpp": 70.0}
-HEADER = "| Run | Notes | Examples (per source) | Rank | LR | Epochs | Eval | IFEval | MATH-500 | MBPP | Meets all | Dev math | Dev code | Checkpoint |"
+HEADER = "| Run | Notes | Examples (per source) | Rank | LR | Epochs | Eval | IFEval | MATH-500 | MBPP | Meets all | Dev math | Dev code | Dev IF (judge) | Checkpoint |"
 
 
 def table_row(summary: dict, dev: dict) -> str:
@@ -20,7 +20,7 @@ def table_row(summary: dict, dev: dict) -> str:
         f"{summary['training']['start_learning_rate']:.1e}", config["train"]["epochs"],
         "full" if summary["full_eval"] else f"limit {config['eval']['limit']}",
         scores["ifeval"], scores["math500"], scores["mbpp"], "yes" if meets else "no",
-        dev.get("math", "–"), dev.get("code", "–"),
+        dev.get("math", "–"), dev.get("code", "–"), dev.get("ifollow", "–"),
         f"`{summary['training']['checkpoint_path']}`",
     ]  # fmt: skip
     return "| " + " | ".join(str(cell) for cell in cells) + " |"
