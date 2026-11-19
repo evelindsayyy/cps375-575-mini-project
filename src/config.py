@@ -65,12 +65,19 @@ class PoolsConfig(Config):
 
 
 class TeacherConfig(Config):
-    """A larger Tinker model that writes solutions. Thinking is turned off in the renderer so the
-    solution is visible step-by-step text, not a hidden reasoning trace."""
+    """A larger model that writes solutions, on Tinker or through the Anthropic API.
 
+    The solution must be visible step-by-step text, not a hidden reasoning trace: on Tinker the
+    renderer turns thinking off; on the Anthropic API extended thinking is simply not requested.
+    """
+
+    provider: Literal["tinker", "anthropic"] = "tinker"
     model: str
-    renderer: str
-    temperature: float = 0.7  # > 0 so several samples per question differ
+    renderer: str | None = None  # Tinker only: chat template used to build the prompt
+    # > 0 so several samples per question differ. Tinker only: the Anthropic API rejects a
+    # temperature field (400 "Extra inputs are not permitted", 2026-11-19), so Claude samples
+    # with its own fixed settings.
+    temperature: float = 0.7
     max_tokens: int = 2048  # probe on MATH train (2026-11-15): correct solutions used 540-1,330 tokens
 
 

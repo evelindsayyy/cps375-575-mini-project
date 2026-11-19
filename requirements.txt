@@ -12,3 +12,4 @@ sympy==1.14.0
 pylatexenc==2.11
 pydantic==2.14.3  # config and data schemas (src/config.py, src/schema.py)
 pyyaml==6.0.3  # experiment config files
+anthropic==2.10.0  # Claude teacher models (src/distill/math_distill.py)

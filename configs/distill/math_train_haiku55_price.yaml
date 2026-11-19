@@ -1,0 +1,7 @@
+# Pricing batch: the same 50 MATH train questions as the Tinker teacher batches, answered by a Claude model.
+name: math_train_haiku55_price
+source: math_train
+problems: 50
+teacher:
+  provider: anthropic
+  model: claude-haiku-5-5

@@ -21,7 +21,10 @@ import logging
 import os
 import sys
 from collections import Counter
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 
+import anthropic
 import tinker
 from tinker_cookbook import renderers
 from tinker_cookbook.tokenizer_utils import get_tokenizer
@@ -34,6 +37,9 @@ from src.formats import MATH_TEACHER_SPEC, final_answer, target_problem
 from src.schema import Example, Message, bucket, normalize, read_jsonl, write_jsonl
 
 logger = logging.getLogger(__name__)
+
+# Requests in flight at once to the Anthropic API; the SDK retries rate-limited requests itself.
+ANTHROPIC_PARALLEL_REQUESTS = 8
 
 def teacher_messages(question: Example) -> list[dict]:
     return [{"role": "system", "content": MATH_TEACHER_SPEC}, {"role": "user", "content": question.messages[0].content}]
@@ -93,27 +99,74 @@ def sample_teacher(questions: list[Example], config: DistillConfig, samples_path
     if not todo:
         return done
 
+    sample_batch = tinker_sampler(config) if config.teacher.provider == "tinker" else anthropic_sampler(config)
+    os.makedirs(os.path.dirname(samples_path), exist_ok=True)
+    for start in range(0, len(todo), config.chunk_size):
+        rows = sample_batch(todo[start : start + config.chunk_size])
+        with open(samples_path, "a", encoding="utf-8") as f:
+            for row in rows:
+                done[row["question_id"]] = row
+                f.write(json.dumps(row) + "\n")
+        logger.info("teacher samples: %d of %d questions", len(done), len(questions))
+    return done
+
+
+def tinker_sampler(config: DistillConfig) -> Callable[[list[Example]], list[dict]]:
+    """Samples from a Tinker model; one request per question returns all its samples."""
     teacher = config.teacher
     renderer = renderers.get_renderer(teacher.renderer, get_tokenizer(teacher.model))
     client = tinker.ServiceClient().create_sampling_client(base_model=teacher.model).result()
     params = tinker.SamplingParams(temperature=teacher.temperature, max_tokens=teacher.max_tokens,
                                    stop=renderer.get_stop_sequences())  # fmt: skip
-    os.makedirs(os.path.dirname(samples_path), exist_ok=True)
-    for start in range(0, len(todo), config.chunk_size):
-        batch = todo[start : start + config.chunk_size]
+
+    def sample_batch(batch: list[Example]) -> list[dict]:
         prompts = [renderer.build_generation_prompt(teacher_messages(question)) for question in batch]
         futures = [client.sample(p, num_samples=config.samples_per_problem, sampling_params=params) for p in prompts]
-        with open(samples_path, "a", encoding="utf-8") as f:
-            for question, prompt, future in zip(batch, prompts, futures):
-                row = {"question_id": question.id, "prompt_tokens": prompt.length, "samples": []}
-                for sequence in future.result().sequences:
-                    message, termination = renderer.parse_response(sequence.tokens)
-                    row["samples"].append({"text": renderers.get_text_content(message),
-                                           "stopped": termination == "stop_sequence", "tokens": len(sequence.tokens)})  # fmt: skip
-                done[question.id] = row
-                f.write(json.dumps(row) + "\n")
-        logger.info("teacher samples: %d of %d questions", len(done), len(questions))
-    return done
+        rows = []
+        for question, prompt, future in zip(batch, prompts, futures):
+            row = {"question_id": question.id, "prompt_tokens": prompt.length, "samples": []}
+            for sequence in future.result().sequences:
+                message, termination = renderer.parse_response(sequence.tokens)
+                row["samples"].append({"text": renderers.get_text_content(message),
+                                       "stopped": termination == "stop_sequence", "tokens": len(sequence.tokens)})  # fmt: skip
+            rows.append(row)
+        return rows
+
+    return sample_batch
+
+
+def anthropic_sampler(config: DistillConfig) -> Callable[[list[Example]], list[dict]]:
+    """Samples from a Claude model through the Anthropic API (key read from ANTHROPIC_API_KEY).
+
+    The API returns one answer per request, so each sample is its own request; prompt_tokens is
+    the input of one request (billed once per sample).
+    """
+    teacher = config.teacher
+    client = anthropic.Anthropic()
+
+    def request(question: Example) -> anthropic.types.Message:
+        system, user = teacher_messages(question)
+        return client.messages.create(model=teacher.model, max_tokens=teacher.max_tokens,
+                                      system=system["content"], messages=[{"role": "user", "content": user["content"]}])  # fmt: skip
+
+    def sample_batch(batch: list[Example]) -> list[dict]:
+        n = config.samples_per_problem
+        with ThreadPoolExecutor(max_workers=ANTHROPIC_PARALLEL_REQUESTS) as pool:
+            responses = list(pool.map(request, [question for question in batch for _ in range(n)]))
+        rows = []
+        for i, question in enumerate(batch):
+            group = responses[i * n : (i + 1) * n]
+            rows.append({"question_id": question.id, "prompt_tokens": group[0].usage.input_tokens,
+                         "samples": [anthropic_sample(response) for response in group]})  # fmt: skip
+        return rows
+
+    return sample_batch
+
+
+def anthropic_sample(response: anthropic.types.Message) -> dict:
+    """One Claude answer in the same shape as a Tinker sample. "max_tokens" means it was cut off."""
+    text = "".join(block.text for block in response.content if block.type == "text")
+    return {"text": text, "stopped": response.stop_reason == "end_turn", "tokens": response.usage.output_tokens}
 
 
 def build_distilled_pool(config: DistillConfig) -> dict:

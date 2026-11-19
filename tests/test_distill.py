@@ -1,5 +1,11 @@
+from types import SimpleNamespace
+
 from src.config import DistillConfig, TeacherConfig
-from src.distill.math_distill import select_solutions, teacher_messages
+from src.distill.math_distill import (
+    anthropic_sample,
+    select_solutions,
+    teacher_messages,
+)
 from src.distill.verify import answers_match
 from src.formats import final_answer, math_prompt, target_problem
 from src.schema import Example, Message
@@ -80,3 +86,21 @@ def test_teacher_sees_the_format_spec_then_the_question():
     messages = teacher_messages(question())
     assert [m["role"] for m in messages] == ["system", "user"]
     assert messages[1]["content"] == question().messages[0].content
+
+
+# ---------------------------------------------------------------- Anthropic teacher responses
+
+
+def anthropic_response(stop_reason: str, *texts: str) -> SimpleNamespace:
+    blocks = [SimpleNamespace(type="text", text=text) for text in texts]
+    return SimpleNamespace(content=blocks, stop_reason=stop_reason, usage=SimpleNamespace(output_tokens=42))
+
+
+def test_anthropic_answer_that_ended_on_its_own_counts_as_finished():
+    row = anthropic_sample(anthropic_response("end_turn", "Step 1.\n", "ANSWER: 3"))
+    assert row == {"text": "Step 1.\nANSWER: 3", "stopped": True, "tokens": 42}
+
+
+def test_anthropic_answer_cut_at_the_token_limit_counts_as_truncated():
+    assert anthropic_sample(anthropic_response("max_tokens", "Step 1. Step 2."))["stopped"] is False
+
